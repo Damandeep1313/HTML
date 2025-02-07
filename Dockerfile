@@ -17,4 +17,4 @@ COPY . .
 EXPOSE 3000
 
 # Define the command to run the application
-CMD ["node", "2.js"]
+CMD ["node", "llm.js"]
