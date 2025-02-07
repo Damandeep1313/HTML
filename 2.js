@@ -5,40 +5,58 @@ const app = express();
 app.use(express.json());
 
 // ==========================
-// 1. MAIN ENDPOINT (POST)
+// MAIN ENDPOINT (POST)
 // ==========================
 app.post('/generate-landing-page', (req, res) => {
   try {
     const {
-      // 1) Basic fields
-      websiteNiche,         // e.g. "medical"
-      doctorDetails,        // e.g. { name: "Dr. daman Singh", specialization: "Neuro", achievements: "Has published 50+ research papers." }
-      pageLinks = [],       // e.g. ["about-us", "services", "contact"]
+      // Basic text fields
+      websiteNiche,             
+      doctorDetails,            
+      pageLinks = [],
       
-      // 2) Images array; we’ll use images[0] in two places (hero & about image)
-      images = []
+      // Hero/About images
+      images = [],
+
+      // Testimonial images
+      testimonialImages = [],
+
+      // FAQ array
+      faqs = []
     } = req.body;
-    
-    // Validation
-    if (!websiteNiche || !doctorDetails || !doctorDetails.name || !doctorDetails.specialization) {
-      return res.status(400).send('Missing required fields');
+
+    // Validate required fields
+    if (!websiteNiche || !doctorDetails || !doctorDetails.name) {
+      return res.status(400).send('Missing required fields: websiteNiche, doctorDetails.name, etc.');
     }
-    
-    // We'll grab the first image from images[], or fall back to a "no image" placeholder.
-    const mainImage = images.length > 0
-      ? images[0]
-      : 'https://via.placeholder.com/1200x600?text=No+Hero+Image';
-    
-    // Build the final HTML (as per your snippet).
-    // The hero background and the "about" image both point to mainImage
-    // The rest (testimonial images) are placeholders, just like your snippet.
+
+    // Hero/About image
+    const mainImage = images[0] || 'https://via.placeholder.com/1200x600?text=No+Hero+Image';
+
+    // Ensure specialization & achievements are arrays
+    const specializationList = Array.isArray(doctorDetails.specialization)
+      ? doctorDetails.specialization
+      : [];
+    const achievementsList = Array.isArray(doctorDetails.achievements)
+      ? doctorDetails.achievements
+      : [];
+
+    // Multi-line description
+    const descriptionText = doctorDetails.description || '';
+
+    // Testimonial images
+    const t1 = testimonialImages[0] || 'https://via.placeholder.com/80';
+    const t2 = testimonialImages[1] || 'https://via.placeholder.com/80';
+    const t3 = testimonialImages[2] || 'https://via.placeholder.com/80';
+
+    // Build final HTML
     const htmlContent = `
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Luxury ${doctorDetails.specialization} – ${doctorDetails.name} | ${websiteNiche.toUpperCase()} Prestige</title>
-  <meta name="description" content="${doctorDetails.name} is a leading ${doctorDetails.specialization} in the ${websiteNiche} field. ${doctorDetails.achievements}" />
+  <title>Luxury Services – ${doctorDetails.name} | ${websiteNiche.toUpperCase()} Prestige</title>
+  <meta name="description" content="${doctorDetails.name} is a leading specialist in the ${websiteNiche} field. This page showcases specializations, achievements, and more." />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <!-- Bootstrap 5 CSS -->
@@ -46,8 +64,13 @@ app.post('/generate-landing-page', (req, res) => {
     href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
     rel="stylesheet"
   >
+  <!-- Bootstrap Icons (for styling bullet points) -->
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"
+  >
   <!-- AOS (Animate On Scroll) CSS -->
-  <link 
+  <link
     rel="stylesheet"
     href="https://cdn.jsdelivr.net/npm/aos@2.3.1/dist/aos.css"
   />
@@ -63,11 +86,12 @@ app.post('/generate-landing-page', (req, res) => {
       font-family: 'Poppins', sans-serif;
       color: #333;
       background-color: #f9f9f9;
-      overflow-x: hidden; /* Hide horizontal scroll */
+      overflow-x: hidden;
     }
     .navbar-brand {
       font-weight: 700;
     }
+    /* Hero */
     .hero-section {
       position: relative;
       height: 75vh;
@@ -80,10 +104,7 @@ app.post('/generate-landing-page', (req, res) => {
     }
     .hero-overlay {
       position: absolute;
-      top: 0;
-      right: 0;
-      bottom: 0;
-      left: 0;
+      top: 0; right: 0; bottom: 0; left: 0;
       background: rgba(0,0,0,0.4);
     }
     .hero-content {
@@ -123,6 +144,17 @@ app.post('/generate-landing-page', (req, res) => {
     .cta-section .btn-cta:hover {
       background-color: #eee;
     }
+
+    /* Enhanced bullet styling for lists */
+    .list-group-item {
+      border: 0;
+      padding-left: 0;
+    }
+    .list-group-item i {
+      color: #2fbfac;
+      margin-right: 0.5rem;
+    }
+
     /* Testimonials */
     .testimonial-carousel .carousel-item {
       padding: 2rem;
@@ -137,14 +169,33 @@ app.post('/generate-landing-page', (req, res) => {
       font-style: italic;
       margin: 1.5rem 0;
     }
-    /* Contact Form */
-    .contact-section {
+
+    /* FAQ Section */
+    .faq-section {
       background-color: #fff;
       padding: 3rem 0;
+      margin-bottom: 3rem; /* Extra space below FAQ */
     }
-    .contact-section h2 {
-      font-weight: 700;
-      margin-bottom: 1rem;
+    /* Description Section styling (within About) */
+    .description-box {
+      background: #fff3e6; /* subtle warm background */
+      border: 1px solid #ffd9b3;
+      padding: 1.5rem;
+      border-radius: 5px;
+      margin-bottom: 1.5rem;
+      line-height: 1.8;
+      min-height: 220px; /* encourage more lines of text visually */
+      width: 95%;        /* Make it wider horizontally */
+      margin: 0 auto 1.5rem auto; /* center horizontally; note bottom margin so there's space after */
+    }
+    /* Appointment Form styling */
+    .appointment-card {
+      border: none;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      border-radius: 8px;
+    }
+    .appointment-card .card-body {
+      padding: 2rem;
     }
     /* Footer */
     footer {
@@ -166,7 +217,7 @@ app.post('/generate-landing-page', (req, res) => {
   <!-- Navbar -->
   <nav class="navbar navbar-expand-lg navbar-dark bg-dark" data-aos="fade-down">
     <div class="container">
-      <a class="navbar-brand" href="#">${doctorDetails.name} – ${doctorDetails.specialization}</a>
+      <a class="navbar-brand" href="#">${doctorDetails.name}</a>
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMenu">
         <span class="navbar-toggler-icon"></span>
       </button>
@@ -186,8 +237,8 @@ app.post('/generate-landing-page', (req, res) => {
   <section class="hero-section">
     <div class="hero-overlay"></div>
     <div class="hero-content" data-aos="zoom-in">
-      <h1>${doctorDetails.name}</h1>
-      <p>Leading ${doctorDetails.specialization} in ${websiteNiche}</p>
+      <h1>Dr. ${doctorDetails.name}</h1>
+      <p>Leading Specialist in ${websiteNiche}</p>
       <button class="btn btn-light mt-3" onclick="document.getElementById('appointment').scrollIntoView({ behavior: 'smooth' });">
         Book an Appointment
       </button>
@@ -197,18 +248,45 @@ app.post('/generate-landing-page', (req, res) => {
   <!-- About Section -->
   <section class="container py-5">
     <div class="row">
+      <!-- Left Column: Specializations, Achievements, etc. -->
       <div class="col-md-6" data-aos="fade-right">
         <h2>About Dr. ${doctorDetails.name}</h2>
-        <p>
-          ${doctorDetails.name} is a renowned ${doctorDetails.specialization} specializing in ${websiteNiche} care.
-          ${doctorDetails.achievements}
-        </p>
         <p class="lead">
           Dedicated to offering the highest level of personalized care for every patient.
         </p>
+
+        <!-- Specializations -->
+        <h4>Specializations:</h4>
+        <ul class="list-group list-group-flush mb-3">
+          ${specializationList.map(spec => `
+            <li class="list-group-item">
+              <i class="bi bi-check-circle-fill"></i>
+              ${spec}
+            </li>
+          `).join('')}
+        </ul>
+
+        <!-- Achievements -->
+        <h4>Achievements:</h4>
+        <ul class="list-group list-group-flush mb-3">
+          ${achievementsList.map(ach => `
+            <li class="list-group-item">
+              <i class="bi bi-star-fill"></i>
+              ${ach}
+            </li>
+          `).join('')}
+        </ul>
+
+        <!-- Description -->
+        <h4 class="mb-2">Description:</h4>
+        <div class="description-box">
+          ${descriptionText}
+        </div>
       </div>
+
+      <!-- Right Column: Image -->
       <div class="col-md-6 text-center" data-aos="fade-left">
-        <img src="${mainImage}" alt="Photo of ${doctorDetails.name}" class="img-fluid rounded shadow">
+        <img src="${mainImage}" alt="Photo of Dr. ${doctorDetails.name}" class="img-fluid rounded shadow">
       </div>
     </div>
   </section>
@@ -216,7 +294,7 @@ app.post('/generate-landing-page', (req, res) => {
   <!-- CTA Section -->
   <section class="cta-section" data-aos="fade-up">
     <div class="container">
-      <h2>Experience World-Class ${doctorDetails.specialization} Today</h2>
+      <h2>Experience Our World-Class Services</h2>
       <p class="mb-4">Book an appointment and discover the difference of dedicated, patient-centered care.</p>
       <button class="btn-cta" onclick="document.getElementById('appointment').scrollIntoView({ behavior: 'smooth' });">
         Book Now
@@ -232,19 +310,19 @@ app.post('/generate-landing-page', (req, res) => {
         <!-- Slide 1 -->
         <div class="carousel-item active">
           <div class="text-center">
-            <img src="https://via.placeholder.com/80" alt="Patient 1">
+            <img src="${t1}" alt="Patient 1">
             <blockquote class="blockquote mt-3">
               "Dr. ${doctorDetails.name} is simply the best. I felt cared for from the moment I walked in!"
             </blockquote>
-            <p class="fw-bold">- Happy Parent</p>
+            <p class="fw-bold">- Happy Patient</p>
           </div>
         </div>
         <!-- Slide 2 -->
         <div class="carousel-item">
           <div class="text-center">
-            <img src="https://via.placeholder.com/80" alt="Patient 2">
+            <img src="${t2}" alt="Patient 2">
             <blockquote class="blockquote mt-3">
-              "I wouldn't trust anyone else with my family's ${doctorDetails.specialization} needs."
+              "I wouldn't trust anyone else with my family's needs."
             </blockquote>
             <p class="fw-bold">- Satisfied Family</p>
           </div>
@@ -252,7 +330,7 @@ app.post('/generate-landing-page', (req, res) => {
         <!-- Slide 3 -->
         <div class="carousel-item">
           <div class="text-center">
-            <img src="https://via.placeholder.com/80" alt="Patient 3">
+            <img src="${t3}" alt="Patient 3">
             <blockquote class="blockquote mt-3">
               "Professional, caring, and highly experienced. 10/10 recommend!"
             </blockquote>
@@ -270,31 +348,59 @@ app.post('/generate-landing-page', (req, res) => {
     </div>
   </section>
 
+  <!-- FAQ Section -->
+  <section class="faq-section container" data-aos="fade-up">
+    <h2 class="text-center mb-4">Frequently Asked Questions</h2>
+    <div class="accordion" id="faqAccordion">
+      ${faqs.map((faq, index) => `
+        <div class="accordion-item">
+          <h2 class="accordion-header" id="heading${index}">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+              data-bs-target="#collapse${index}" aria-expanded="false" aria-controls="collapse${index}">
+              ${faq.question}
+            </button>
+          </h2>
+          <div id="collapse${index}" class="accordion-collapse collapse"
+               aria-labelledby="heading${index}" data-bs-parent="#faqAccordion">
+            <div class="accordion-body">
+              ${faq.answer}
+            </div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  </section>
+
   <!-- Appointment Form (Scroll Target) -->
   <section class="contact-section" id="appointment">
     <div class="container" data-aos="fade-up">
       <h2 class="text-center mb-5">Request an Appointment</h2>
       <div class="row justify-content-center">
         <div class="col-md-8">
-          <form>
-            <div class="mb-3">
-              <label for="name" class="form-label">Full Name</label>
-              <input type="text" class="form-control" id="name" placeholder="Your name" required>
+          <div class="card appointment-card">
+            <div class="card-body">
+              <h4 class="card-title mb-3">Please fill in your details</h4>
+              <form>
+                <div class="mb-3">
+                  <label for="name" class="form-label">Full Name</label>
+                  <input type="text" class="form-control" id="name" placeholder="Your name" required>
+                </div>
+                <div class="mb-3">
+                  <label for="email" class="form-label">Email Address</label>
+                  <input type="email" class="form-control" id="email" placeholder="name@example.com" required>
+                </div>
+                <div class="mb-3">
+                  <label for="date" class="form-label">Preferred Date</label>
+                  <input type="date" class="form-control" id="date" required>
+                </div>
+                <div class="mb-3">
+                  <label for="notes" class="form-label">Additional Notes</label>
+                  <textarea class="form-control" id="notes" rows="3" placeholder="Any special requests or questions..."></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary px-4">Submit</button>
+              </form>
             </div>
-            <div class="mb-3">
-              <label for="email" class="form-label">Email Address</label>
-              <input type="email" class="form-control" id="email" placeholder="name@example.com" required>
-            </div>
-            <div class="mb-3">
-              <label for="date" class="form-label">Preferred Date</label>
-              <input type="date" class="form-control" id="date" required>
-            </div>
-            <div class="mb-3">
-              <label for="notes" class="form-label">Additional Notes</label>
-              <textarea class="form-control" id="notes" rows="3" placeholder="Any special requests or questions..."></textarea>
-            </div>
-            <button type="submit" class="btn btn-primary px-4">Submit</button>
-          </form>
+          </div>
         </div>
       </div>
     </div>
@@ -303,38 +409,36 @@ app.post('/generate-landing-page', (req, res) => {
   <!-- Footer -->
   <footer>
     <div class="container">
-      <p class="mb-2">&copy; ${new Date().getFullYear()} ${doctorDetails.name}. All rights reserved.</p>
-      <p>Setting the gold standard in ${doctorDetails.specialization} for patients in every walk of life.</p>
+      <p class="mb-2">&copy; ${new Date().getFullYear()} Dr. ${doctorDetails.name}. All rights reserved.</p>
+      <p>Setting the gold standard in personalized healthcare for every walk of life.</p>
     </div>
   </footer>
 
   <!-- Bootstrap JS bundle -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
   <!-- AOS Library JS -->
   <script src="https://cdn.jsdelivr.net/npm/aos@2.3.1/dist/aos.js"></script>
   <script>
     AOS.init({
-      duration: 1000, // Animation duration
-      once: true      // Whether animation should happen only once
+      duration: 1000,
+      once: true
     });
   </script>
 </body>
 </html>
     `;
 
-    // Return as text/html so it looks the same when you open it in a browser
+    // Return final HTML
     return res.status(200).type('text/html').send(htmlContent);
+
   } catch (err) {
     console.error('Error generating landing page:', err);
     return res.status(500).send('Something went wrong');
   }
 });
 
-// ==========================
-// 2. START THE SERVER
-// ==========================
+// Start server
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
-  console.log(`Landing Page Generator is running at http://localhost:${port}`);
+  console.log('Landing Page Generator is running at http://localhost:' + port);
 });
