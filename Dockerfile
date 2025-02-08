@@ -15,4 +15,4 @@ COPY . .
 EXPOSE 3000
 
 # Command to start the app
-CMD ["node", "2.js"]
+CMD ["node", "final1.js"]
