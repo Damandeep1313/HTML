@@ -1,18 +1,27 @@
-# Use Node.js as the base image
-FROM node:18
+# Use a Debian-based Node.js 16 image (includes apt-get)
+FROM node:16-bullseye
 
-# Set working directory
+# Install zip via apt-get
+RUN apt-get update && apt-get install -y zip
+
+# Create and set working directory
 WORKDIR /app
 
-# Copy package files and install dependencies
+# Copy package.json and package-lock.json (if present)
 COPY package*.json ./
-RUN npm install --only=production
 
-# Copy the rest of the app files
+# Install dependencies
+RUN npm install
+
+# Copy the rest of your source code into /app
 COPY . .
 
-# Expose port
+# (OPTIONAL) If you want to copy a local .env file into the image 
+# (Note: usually you don't want secrets baked into the image)
+# COPY .env .env
+
+# Expose the port your app listens on (3000)
 EXPOSE 3000
 
-# Command to start the app
-CMD ["node", "final1.js"]
+# Define the command to start the server
+CMD ["node", "server.js"]
